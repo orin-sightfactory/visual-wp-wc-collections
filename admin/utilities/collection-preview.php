@@ -7,7 +7,6 @@
 ?>
 <html><head>
 <?php
-//echo "ID=".$_GET["id"];
 if(isset($_GET["id"]) && $_GET["id"] > 0){
     do_action( 'wp_head');
     ?>
@@ -15,7 +14,7 @@ if(isset($_GET["id"]) && $_GET["id"] > 0){
     <?php
     $id = sanitize_text_field(intval($_GET["id"]));
     $use_saved = isset($_GET['draft']) && $_GET['draft'] == true ? false : true;
-    $collection = get_collection($use_saved , $id);
+    $collection = vwpwc_get_collection($use_saved , $id);
     if($collection) {
         echo wp_kses($collection,vwpwc_allowed_html());
     }
