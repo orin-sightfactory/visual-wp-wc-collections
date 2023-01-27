@@ -9,7 +9,7 @@
  * Plugin Name:       VWP eCommerce Collections
  * Plugin URI:        http://www.sightfactory.com/wordpress-plugins/vwp-ecommerce-collections
  * Description:       Create collections of similar products based on categories, tags, product name etc for your WooCommerce store
- * Version:           1.0.1
+ * Version:           1.0.2
  * Author:            Sightfactory
  * Author URI:        http://www.sightfactory.com
  * License:           GPL-2.0+
