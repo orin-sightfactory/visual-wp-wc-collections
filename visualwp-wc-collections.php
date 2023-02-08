@@ -9,7 +9,7 @@
  * Plugin Name:       VWP eCommerce Collections
  * Plugin URI:        http://www.sightfactory.com/wordpress-plugins/vwp-ecommerce-collections
  * Description:       Create collections of similar products based on categories, tags, product name etc for your WooCommerce store
- * Version:           1.0.3
+ * Version:           1.0.2
  * Author:            Sightfactory
  * Author URI:        http://www.sightfactory.com
  * License:           GPL-2.0+
@@ -166,8 +166,7 @@ function vwpwc_get_edit_menu($vwp_id){
     switch(@$_REQUEST['view']){
         case "edit":
             $vwp_edit_menu = '<div id="vwp-menu-primary">'.vwpwc_populate_menu().'</div>';
-            // <div id="vwp-menu-secondary"><button class="vwp-menu-item">Description</button><button class="vwp-menu-item">Slug</button><button class="vwp-menu-item">[/]</button></div>
-//';
+
             break;
         default:
             $vwp_edit_menu = '';
@@ -185,7 +184,7 @@ function vwpwc_get_panes($vwp_id){
             ?>
             <div id="vwp-settings-pane">
                 <?php
-                echo vwpwc_populate_menu_widgets('settings');
+                echo wp_kses(vwpwc_populate_menu_widgets('settings'),vwpcollection_get_allowed_html()); 
                 ?>               
             </div>
             <div id="vwp-visual-pane">
