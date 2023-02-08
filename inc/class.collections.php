@@ -12,7 +12,9 @@ function vwpcollection_onactivation() {
 
     }
   
-    flush_rewrite_rules();
+    global $wp_rewrite;
+    $wp_rewrite->flush_rules();
+    $wp_rewrite->init();
 }
 
 //create default collection function
@@ -38,7 +40,12 @@ function vwpcollection_create_default_collection() {
     //insert the post into the database
     if(wp_insert_post($collection)) {
         wp_insert_post($preview_collection);
-        flush_rewrite_rules();
+        global $wp_rewrite;
+        $wp_rewrite->flush_rules();
+        $wp_rewrite->init();
+        
+
+
         return true;
     }
     else {
@@ -187,6 +194,135 @@ function vwpcollection_save_collection_meta($post_id) {
             }
         }
     }
+}
+
+
+function vwpcollection_get_allowed_html() {
+    $allowed_tags = array(
+		'a' => array(
+			'class' => array(),
+			'href'  => array(),
+			'rel'   => array(),
+			'title' => array(),
+		),
+		'abbr' => array(
+			'title' => array(),
+		),
+		'b' => array(),
+        'button' => array(
+            'class' => array(),
+            'id' => array(),
+            'type' => array(),
+            'value' => array(),
+            'name' => array(),
+            'data-key' => array(),
+        ),
+		'code' => array(),
+		'del' => array(
+			'datetime' => array(),
+			'title' => array(),
+		),
+		'dd' => array(),
+		'div' => array(
+			'class' => array(),
+			'title' => array(),
+			'style' => array(),
+            'id' => array(),
+            'contenteditable' => array(),
+		),
+		'dl' => array(),
+		'dt' => array(),
+		'em' => array(),
+		'h1' => array(),
+		'h2' => array(),
+		'h3' => array(),
+		'h4' => array(),
+		'h5' => array(),
+		'h6' => array(),
+        'hr' => array(),
+		'i' => array(),
+        'iframe' => array(
+            'class' => array(),
+            'id' => array(),
+            'name' => array(),
+            'title' => array(),
+            'style' => array(),
+            'src' => array(),
+            'width' => array(),
+            'height' => array(),
+            'frameborder' => array(),
+            'allowfullscreen' => array(),
+        ),
+        'input' => array(
+            'class' => array(),
+            'id' => array(),
+            'type' => array(),
+            'value' => array(),
+            'name' => array(),
+            'checked' => array(),
+            
+        ),
+		'img' => array(
+			'alt'    => array(),
+			'class'  => array(),
+			'height' => array(),
+			'src'    => array(),
+			'width'  => array(),
+		),
+		'li' => array(
+			'class' => array(),
+		),
+        'label' => array(
+            'class' => array(),
+            'for' => array(),
+        ),
+		'ol' => array(
+			'class' => array(),
+		),
+		'p' => array(
+			'class' => array(),
+		),
+		'q' => array(
+			'cite' => array(),
+			'title' => array(),
+		),
+        'textarea' => array(
+            'class' => array(),
+            'id' => array(),
+            'name' => array(),
+            'rows' => array(),
+            'cols' => array(),
+            'value' => array(),
+        ),
+		'span' => array(
+			'class' => array(),
+			'title' => array(),
+			'style' => array(),
+		),
+		'strike' => array(),
+		'strong' => array(),
+        'svg' => array(
+            'class' => array(),
+            'id' => array(),
+            'viewbox' => array(),
+            'xmlns' => array(),
+            'width' => array(),
+            'height' => array(),
+            'fill' => array(),
+            'style' => array()
+            
+        ),
+        'style' => array(),
+        'path' => array(
+            'd' => array(),
+            'fill' => array(),
+        ),
+		'ul' => array(
+			'class' => array(),
+		),
+	);
+	
+	return $allowed_tags;
 }
 
 //activation hook
