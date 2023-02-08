@@ -9,7 +9,7 @@
  * Plugin Name:       VWP eCommerce Collections
  * Plugin URI:        http://www.sightfactory.com/wordpress-plugins/vwp-ecommerce-collections
  * Description:       Create collections of similar products based on categories, tags, product name etc for your WooCommerce store
- * Version:           1.0.2
+ * Version:           1.0.3
  * Author:            Sightfactory
  * Author URI:        http://www.sightfactory.com
  * License:           GPL-2.0+
@@ -30,14 +30,14 @@ define('WC_COLLECTION_ACTIVATION_PATH_URL', __FILE__);
 //require collections class
 require_once plugin_dir_path( __FILE__ ) . 'inc/class.collections.php';
 
-global $post , $vwp_post_id , $manual_reload;
+global $post , $vwpwcc_post_id , $manual_reload;
 
-//echo "pt=".$post->post_type;
+
 $manual_reload = true;
 add_filter( 'single_template', 'vwpwc_load_collections_template', 10, 1 );
 function vwpwc_load_collections_template( $template ) {
     global $post , $manual_reload;
-      //echo "Asdfasdfsadfa=".$post->post_name;;
+    
     // disable admin bar from showing up on collection preview
     if ( 'collection' === $post->post_type && $post->post_name == 'vwpwcc-preview-collection') {
         //check if user has editor role
@@ -65,25 +65,6 @@ function vwpwc_load_collections_template( $template ) {
 
     return $template;
 }
-
-
-
-/*add_action( 'template_redirect ', 'load_collections_preview');
-function load_collections_preview( $template ) {
-    global $post;
-    if ( 'page' === $post->post_type && locate_template( array('collection-preview.php') ) !== $template ) {
-        /*
-        * This is an page post
-        * AND a 'collection-preview' is not found on
-        * theme or child theme directories, so load it
-        * from our plugin directory from inside a /admin/utilities folder.
-        */
-/*
-        return WC_COLLECTIONS_PLUGIN_DIR_PATH . 'admin/utilities/collection-preview.php';
-    }
-
-    return $template;
-}*/
 
 
 
@@ -117,50 +98,41 @@ function vwpwccol_ui_theme_style() {
 }
 
 function vwpwccol_init(){
-    global $vwp_post_id;
+    global $vwpwcc_post_id;
     /*if(@$_GET['view'] == "edit" && @$_GET['action'] == "new"){
         $postarr = array("post_title"=>"Untitled Collection", "post_type" => "collection");
-        $vwp_post_id = wp_insert_post($postarr);
+        $vwpwcc_post_id = wp_insert_post($postarr);
     }else*/
-    if(@$_GET['view'] == "edit" && @$_GET['id'] > 0){
-        $vwp_post_id = $_GET['id'];
+    if(@$_GET['view'] == "edit" && isset($_GET['id']) && intval($_GET['id']) > 0){
+        $vwpwcc_post_id = intval(esc_html($_GET['id']));
+        
     }else{
-        $vwp_post_id = 0;
+        $vwpwcc_post_id = 0;
     }
-
+   
     require(WC_COLLECTIONS_PLUGIN_DIR_PATH.'admin/includes/menus.php');
 
 
-    //echo '<h1>'.$vwp_post_id.'</h1>';
+
 
     global $vwpwc_get_edit_menu;
 
-    $plugin_title = get_admin_page_title($vwp_post_id);
-    $vwp_header_menu = vwpwc_get_header_menu($vwp_post_id);
-    $vwpwc_get_edit_menu = vwpwc_get_edit_menu($vwp_post_id);
-    $vwpwc_get_panes = vwpwc_get_panes($vwp_post_id); 
+    $plugin_title = get_admin_page_title($vwpwcc_post_id);
+    $vwp_header_menu = vwpwc_get_header_menu($vwpwcc_post_id);
+    $vwpwc_get_edit_menu = vwpwc_get_edit_menu($vwpwcc_post_id);
+    $vwpwc_get_panes = vwpwc_get_panes($vwpwcc_post_id); 
 
-    /*switch(@$_REQUEST['view']){
-        case "edit":
-            $vwp_header_menu = vwpwc_get_header_menu('edit');
-            $vwp_edit_menu = vwpwc_get_edit_menu('edit');
-            $vwp_panes = vwpwc_get_panes('edit');
-            break;
-        default:
-            $menu = vwp_get_menu('dashboard');
-            $menu = vwpwc_get_panes('dashboard');
-            break;
-    }*/
+   
     ?>
     <div id="vwp-wrapper">
         <div id="vwp-header-wrapper">
             <div id="vwp-header">
                 <div id="vwp-branding"><span class="plugin-creator">VisualWP</span><?php echo esc_html($plugin_title) ?></div>
-                <div id="vwp-header-menu"><?php echo $vwp_header_menu ?></div>
+                <div id="vwp-header-menu"><?php echo wp_kses($vwp_header_menu,vwpcollection_get_allowed_html()) ?></div>
             </div>
              
         </div>
-        <div id="vwp-panes"><?php echo $vwpwc_get_panes; ?></div> 
+        <div id="vwp-panes"><?php echo wp_kses($vwpwc_get_panes,vwpcollection_get_allowed_html()); //$vwpwc_get_panes;?></div> 
         <div id="vwp-plugin-overlay"></div>  
     </div>
     
@@ -179,14 +151,13 @@ function vwpwc_get_header_menu($vwp_id){
             break;
         default:
             $collection_title = get_the_title($vwp_id);
-            //$vwp_header_menu = $vwp_id ? '<div class="vwp-input-wrapper"><input id="col-title" class="vwp-post-title" type="text" name="col-title" value="'.$collection_title.'" placeholder="Add title" /></div>' : '';
             $vwp_header_menu = '';
             //$vwp_header_menu .= '<button>Go Pro</button>';
-            $vwp_header_menu .= '<button class=""><a href="'.esc_html($home_url).'/wp-admin/admin.php?page=vwp-wc-collections&view=edit&action=new">+Add New</a></button>';
+            $vwp_header_menu .= '<button class=""><a href="'.$home_url.'/wp-admin/admin.php?page=vwp-wc-collections&view=edit&action=new">+Add New</a></button>';
             break;
     }
 
-    return $vwp_header_menu;
+    return wp_kses($vwp_header_menu,vwpcollection_get_allowed_html());
 }
 
 
@@ -203,7 +174,7 @@ function vwpwc_get_edit_menu($vwp_id){
             break;
     }
 
-    return $vwp_edit_menu;
+    return wp_kses($vwp_edit_menu,vwpcollection_get_allowed_html());
 }
 
 function vwpwc_get_panes($vwp_id){
@@ -218,8 +189,8 @@ function vwpwc_get_panes($vwp_id){
                 ?>               
             </div>
             <div id="vwp-visual-pane">
-                <div id="vwp-menu"><?php echo $vwpwc_get_edit_menu; ?></div>
-                <div id="vwp-menu-dropdown"><?php echo vwpwc_populate_menu_widgets('dropdown') ?></div>
+                <div id="vwp-menu"><?php echo wp_kses($vwpwc_get_edit_menu,vwpcollection_get_allowed_html()); ?></div>
+                <div id="vwp-menu-dropdown"><?php echo wp_kses(vwpwc_populate_menu_widgets('dropdown'),vwpcollection_get_allowed_html()) ?></div>
                 <div id="vwp-preview-pane"><div id="vwp-live-preview-loader"><div class="vwp-loader-text">Loading...</div></div><iframe id="vwp-live-preview" src="<?php echo esc_html(get_home_url())?>/collection/vwpwcc-preview-collection/?id=<?php echo esc_html(@intval($vwp_id)) ?>"></iframe></div>
             </div>
             
@@ -231,7 +202,7 @@ function vwpwc_get_panes($vwp_id){
             ob_start();
             ?>
             <div id="vwp-list-pane">
-                <?php echo vwpwccol_list(); ?>
+                <?php echo wp_kses(vwpwccol_list(),vwpcollection_get_allowed_html()); ?>
             </div>
 
             <?php
@@ -242,14 +213,12 @@ function vwpwc_get_panes($vwp_id){
 
 
 
-    return $vwp_panes;
+    return wp_kses($vwp_panes,vwpcollection_get_allowed_html());
 }
 
 function vwpwccol_list(){
     //global $wpdb;
-    /*$table = $wpdb->prefix."vwpwccol_wc_store_notices";
-    $query = "SELECT * from $table";
-    $results = $wpdb->get_results($query);*/
+   
     $ob_output = "List";
     // The Query
     $args = array("post_type" => "collection");
@@ -276,7 +245,7 @@ function vwpwccol_list(){
             if(get_the_title() != "VWPWCC Preview Collection" ) {
             ?>
             <div class="collection-row">
-                <div class="vwp-grid-col"><a href="<?php echo vwpwc_get_vwpwccol_view(array("view"=>"edit" , "id"=>esc_html(get_the_ID()))) ?>"><?php echo esc_html(get_the_title()) ?></a></div>
+                <div class="vwp-grid-col"><a href="<?php echo vwpwc_get_vwpwccol_view(array("view"=>"edit" , "id"=>get_the_ID())) ?>"><?php echo esc_html(get_the_title()) ?></a></div>
                 <div class="vwp-grid-col"><?php echo esc_html(get_the_excerpt())  ?></div>
                 <div class="vwp-grid-col"><?php echo esc_html(get_the_author())  ?></div>
                 <div class="vwp-grid-col"><?php echo esc_html(get_the_modified_date())  ?></div>
@@ -315,8 +284,8 @@ function vwpwc_get_vwpwccol_view($url_params = false){
     // fixes the issue with the admin url not being correct
     $vwp_view_url = get_admin_url().'admin.php?page='.esc_html($_GET['page']).esc_html($query_str); 
     
-
-    return $vwp_view_url;
+    
+    return esc_html($vwp_view_url);
 }
 
 
@@ -384,9 +353,7 @@ function vwpwc_get_collection_result_set($frontend = false , $id = 0){
         return false;
     }
                             
-    //$collection_settings = json_decode(get_field("collection_settings"), true);
 
-    //$collection_settings_json = $frontend ? stripslashes(get_field('collection_settings' , $collection_id)) : stripslashes($_POST['collection_settings_json']);
     $collection_settings_json = $frontend ? stripslashes(get_post_meta($collection_id,'collection_settings',true)) : stripslashes(get_post_meta($collection_id,'collection_draft',true));
     if($collection_settings_json == ''){
         $result_ids = 0;
@@ -396,7 +363,7 @@ function vwpwc_get_collection_result_set($frontend = false , $id = 0){
     
     //$collection_settings_json = stripslashes(get_field('collection_settings' , $collection_id));
 
-    //echo $collection_settings_json."<br>";
+
     //$collection_settings_json = stripslashes($_POST['collection_settings_json']);
     $collection_settings = json_decode($collection_settings_json, true);
     //var_dump($collection_settings['conditions']);
@@ -419,7 +386,7 @@ function vwpwc_get_collection_result_set($frontend = false , $id = 0){
 
         //$collection_where .= $collection_where == "" ? "" : $where_match;
 
-        //echo "source: ".$source."<br>";
+
 
         // Set Term based on Operator
         switch($operator){
@@ -441,10 +408,7 @@ function vwpwc_get_collection_result_set($frontend = false , $id = 0){
         if($source == 'Product Category' || $source == 'Product Tag'){
             $has_cat_search = true;
             $cat_term_ids[] = intval($term_id) ? intval($term_id) : 0;
-            /*$collection_where .=   $wpdb->prepare("mrt_term_relationships.term_taxonomy_id IN ( SELECT mrt_terms.term_id FROM mrt_terms
-                                                    INNER JOIN mrt_term_taxonomy ON (mrt_terms.term_id = mrt_term_taxonomy.term_id)
-                                                    WHERE mrt_term_taxonomy.taxonomy = 'product_cat'
-                                                    AND mrt_terms.name = %s )", $term_formatted);*/
+           
 
 
                                                     
@@ -462,20 +426,9 @@ function vwpwc_get_collection_result_set($frontend = false , $id = 0){
     if($has_cat_search){
         $collection_where .= strlen($collection_where) > 0 ? $where_match : "";
 
-    /* $is_first_id = true;
-        foreach($cat_term_ids as $cat_term_id){
-            $collection_where .= !$is_first_id ? ' AND ' : '';
-            $collection_where .=   'mrt_term_relationships.term_taxonomy_id IN ('.$cat_term_id.')';
-        }*/
-
-
-        //var_dump($term_ids);
-        //if($operator == "is equal to"){
+  
             $collection_where .=   $db_table_prefix.'term_relationships.term_taxonomy_id IN ('.implode("," , $cat_term_ids).')';
-        //}else{
-        //    $collection_where .=   'mrt_term_relationships.term_taxonomy_id NOT IN ('.implode("," , $cat_term_ids).')';
-       // }
-        //$collection_where .= ' HAVING COUNT(DISTINCT mrt_term_relationships.term_taxonomy_id) = '.count($cat_term_ids);
+      
     }
 
 
@@ -487,19 +440,19 @@ function vwpwc_get_collection_result_set($frontend = false , $id = 0){
 
     $having_clause = $has_cat_search && trim($where_match) == "AND"  ? " HAVING COUNT(DISTINCT term_taxonomy_id) = ".count($cat_term_ids)." " : "";
 
-    //echo $collection_query;
+
     $collection_query_all = $collection_query_select.$price_inner_join.$tax_inner_join.$collection_where_default.$collection_where.$group_clause.$having_clause.$order_clause;
 
     $collection_query = $collection_query_select.$price_inner_join.$tax_inner_join.$collection_where_default.$collection_where.$group_clause.$having_clause.$order_clause.$limit_clause;
 
-   // echo $collection_query_all;
+
 
     $result_limitless = $wpdb->get_results($collection_query_all);
     $result_count = count($result_limitless);
 
     $results = $wpdb->get_results($collection_query);
 
-    //echo "<br>".$result_count." results<br>";
+
 
     $result_set = array();
     $result_ids = array();
@@ -525,44 +478,19 @@ function vwpwc_get_collection_result_set($frontend = false , $id = 0){
             //$found_ids[] = $result->ID;
         }
     }else{
-        /*$result_set[] = array("product_id" => 0,
-                                    "product_title" => "",
-                                    "product_price_html" => "",
-                                    "produt_image" =>  "",
-                                    "product_permalink" => ""                        
-                            );
-                       */ 
+      
         $result_ids = 0;
     }
 
-    /*if($frontend){
-        //$collection_result_set["count"] = $result_count;
-        //$collection_result_set["results"] = $result_set;
-        return $result_limitless;
-    }else{
-        $collection_result_set["count"] = $result_count;
-        $collection_result_set["results"] = $result_set;
-        echo json_encode($collection_result_set);
-        exit;
-    }*/
-
-    //$collection_result_set["count"] = $result_count;
-    //$collection_result_set["results"] = $result_set;
-    //return $collection_result_set;
-
-    //var_dump($result_ids);
-
-    //echo $product_ids = implode("," , $result_ids);
-
-
+    
     return $result_ids;
 
     //do_shortcode('[products ids="23294,23288,23284"]');
 
 }
 
-add_action('wp_ajax_save_collection' , 'save_collection');
-function save_collection(){
+add_action('wp_ajax_save_collection' , 'vwpwcc_save_collection');
+function vwpwcc_save_collection(){
     if ( current_user_can( 'editor' ) || current_user_can( 'administrator' ) ) {
     
    
@@ -571,20 +499,6 @@ function save_collection(){
         }
 
         $collection_settings_json = stripslashes($collection_settings_json);
-
-    //var_dump($post_args_obj);
-        //$post_args_json = stripslashes($post_args_obj);
-        //$post_args = json_decode($post_args_json, true);
-
-        /*$myargs = array("post_title" => $post_args_obj['post_title'],
-                        "post_excerpt" => "",
-                        "post_status" => "publish",
-                        "post_type" => "collection");*/
-                        
-        //echo "=======================";
-        
-        //var_dump($myargs);
-
 
         if(array_key_exists("ID" , $post_args_obj)){
             $post_id = wp_update_post( $post_args_obj );
@@ -595,7 +509,7 @@ function save_collection(){
             // add metas
             update_post_meta($post_id , 'collection_settings' , sanitize_text_field($collection_settings_json));
 
-            echo $post_id;
+            echo esc_html(intval($post_id));
         }else{
             echo "0";
         }
@@ -642,10 +556,10 @@ function vwpwc_update_collection_draft(){
     foreach($_POST as $key=>$value){
         $$key = $value;
     }
-    $update_success = update_post_meta($post_id, $meta_key, $meta_value);
+    $update_success = update_post_meta(sanitize_text_field($post_id), sanitize_text_field($meta_key), sanitize_text_field($meta_value));
     $success_msg = $update_success ? "updated" : "failed";
 
-    echo sanitize_text_field($success_msg);
+    echo esc_html($success_msg);
     exit;
 
 }
@@ -655,11 +569,15 @@ function vwpwc_get_collection($is_frontend = true , $id = 0){
     global $post;
     
     if(isset($_POST['post_id'])){
-        $collection = $_POST['post_id'] > 0 ? get_post($_POST['post_id']) : $post;
+        $collection = intval(sanitize_text_field($_POST['post_id'])) > 0 ? get_post(intval(sanitize_text_field($_POST['post_id']))) : $post;
         $is_frontend = false;
-        //$id = $_POST['post_id'];
+        
     }else{
-        $collection = $id > 0 ? get_post($id) : $post;
+        $collection = $id > 0 ? get_post(sanitize_text_field(intval($id))) : $post;
+    }
+    
+    if(is_numeric($collection) && $collection == 0 || $collection == NULL) {
+        return false;
     }
    
     $htmldata = '';
@@ -671,17 +589,13 @@ function vwpwc_get_collection($is_frontend = true , $id = 0){
     }
     
     $ids = vwpwc_get_collection_result_set($is_frontend , $collection->ID);
-
-    //foreach($result_set as $result){
-    //    $ids[] = $result->ID;
-    //}
    
     if($ids){
         $product_ids = esc_html(implode("," , $ids ));
         return $htmldata.do_shortcode("[products ids='$product_ids' limit ='12' paginate='true']");
     }else{
         return false;
-        //echo "<p>No products found.</p>";
+        
     }
 }
 
@@ -696,33 +610,29 @@ function vwpwccol_collections($atts){
 }
 
 
-add_action('wp_ajax_add_new_collection' , 'add_new_collection');
-function add_new_collection(){
+add_action('wp_ajax_add_new_collection' , 'vwpwcc_add_new_collection');
+function vwpwcc_add_new_collection(){
     $postarr = array("post_title"=>"Untitled Collection", "post_type" => "collection");
     $insert_result = wp_insert_post($postarr);
 
-    echo $insert_result;
+    echo esc_html($insert_result);
     exit;
 }
 
 
-$vwpwwc_menu_description = '<div class="vwp-form-row label-above"><label class="vwpvf-label" for="vwpwcc-collection-description">Description</label><textarea id="vwpwcc-collection-description" type="text" name="vwpwcc-collection-description"><?php echo @get_the_excerpt($vwp_post_id)  ?></textarea></div>  
+$vwpwwc_menu_description = '<div class="vwp-form-row label-above"><label class="vwpvf-label" for="vwpwcc-collection-description">Description</label><textarea id="vwpwcc-collection-description" type="text" name="vwpwcc-collection-description"><?php echo esc_html(@get_the_excerpt($vwpwcc_post_id))  ?></textarea></div>  
 <hr class="vwp-divider" />';
 
 
-//$vwp_menu = "";
-//$vwp_menu .= 
-
 add_action('wp_ajax_vwpwcc_update_collection_post' , 'vwpwcc_update_collection_post');
 function vwpwcc_update_collection_post(){
-    $param = $_POST["param"];
-    $value = $_POST["value"];
-    $post_id = $_POST["post_id"];
-    //$slug = $_POST["slug"];
+    $param = sanitize_text_field($_POST["param"]);
+    $value = sanitize_text_field($_POST["value"]);
+    $post_id = sanitize_text_field(intval($_POST["post_id"]));
     $postarr = array("ID" => $post_id, $param => $value);
     $update_result = wp_update_post($postarr);
 
-    echo sanitize_text_field($update_result);
+    echo esc_html($update_result);
     exit;
 }
 
